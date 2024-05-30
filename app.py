@@ -3,12 +3,12 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import torch
 from torch.nn.functional import cross_entropy
 import nltk
-from nltk.probability import FreqDist
 from nltk import FreqDist
 import plotly.express as px
 from collections import Counter
 from nltk.corpus import stopwords
 import string
+import PyPDF2
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -23,6 +23,24 @@ max_burstiness = 1
 #load gpt2 model and tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained('gpt2')
+
+
+st.set_page_config(layout="wide")
+def read_pdf(file):
+    pdf_file_obj = open(file, 'rb')
+    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
+    num_pages = pdf_reader.numPages
+    text = ""
+    for page in range(num_pages):
+        page_obj = pdf_reader.getPage(page)
+        text += page_obj.extractText()
+    pdf_file_obj.close()
+    return text
+
+
+pdf_file = st.file_uploader("Upload a PDF", type=['pdf'])
+if pdf_file is not None:
+    text = read_pdf(pdf_file)
 
 def calculate_perplexity(text):
     encoded_input = tokenizer.encode(text, add_special_tokens=False, return_tensors='pt')
@@ -63,7 +81,7 @@ def plot_top_repeated_words(text):
     st.plotly_chart(fig, use_container_width=True)
 
 
-st.set_page_config(layout="wide")
+
 
 st.title("AI Plagarism Checker")
 
@@ -104,7 +122,7 @@ if text_area is not None:
 
             #st.warning("Disclaimer: AI Plagiarism detecting apps can assist in identifying potential AI generated content, however they are not 100% reliable")
 
-     with col3:
+        with col3:
             st.info("Basic Insights")
             plot_top_repeated_words(text_area)
 
